@@ -752,12 +752,12 @@ insert into public.frameworks (id, plain_name, formal_name, attributed_to, one_s
   ('shared-storm', 'More names can still be one storm', 'Diversification and correlation', 'Harry Markowitz and Ray Dalio', 'Extra holdings help only when the same event does not hurt all of them.'),
   ('cash-versus-story', 'Profit on paper is not cash you can spend', 'Earnings versus cash flow', 'Warren Buffett, simplified', 'Uncollected sales and equipment spending can empty the drawer while the report looks fine.'),
   ('expectations', 'The price may already include the good news', 'Expectations in the price', 'Howard Marks and Robert Shiller', 'A fine business can still be a crowded price.'),
-  ('prices-hold-information', 'A price already reflects a lot of public talk', 'Information in prices, and its limit', 'Eugene Fama and Robert Shiller, 2013 economics prize', 'Beating a price after costs is hard, and a price can still swing with a story.'),
+  ('prices-hold-information', 'A price already reflects a lot of public talk', 'Information in prices, and its limit', 'Eugene Fama and Robert Shiller shared the 2013 prize in economic sciences. The committee did not pick a winner. This is not the Peace Prize.', 'Beating a price after costs is hard, and a price can still swing with a story.'),
   ('dilution', 'New slices shrink your piece', 'Dilution', 'Ownership arithmetic', 'Keeping every share does not keep your percentage if new shares are created.'),
   ('costs-and-the-haystack', 'Costs quietly eat the result', 'Fees and long-term ownership', 'John Bogle and the stewardship theme in Larry Fink''s letters', 'A repeating cost changes what is left. A letter is not a personal instruction.'),
   ('overconfidence', 'Feeling sure is not the same as being right', 'Overconfidence', 'Daniel Kahneman and Richard Thaler', 'Confidence is not a point system, and a correct guess is not understanding.'),
   ('lemons', 'The seller may know something you do not', 'Asymmetric information', 'George Akerlof, 2001 economics prize', 'When quality is hard to see, a shiny story is not proof.'),
-  ('access-is-not-a-good-deal', 'Being allowed to borrow is not the same as a good deal', 'Microcredit', 'Muhammad Yunus, 2006 Nobel Peace Prize', 'Access to a loan is not the same thing as fair terms. Later evidence on small loans is mixed.')
+  ('access-is-not-a-good-deal', 'Being allowed to borrow is not the same as a good deal', 'Microcredit', 'Muhammad Yunus, 2006 Nobel Peace Prize, not the prize in economic sciences', 'Access to a loan is not the same thing as fair terms. Later studies often found modest effects, not a transformation.')
 on conflict (id) do nothing;
 
 insert into public.clubs (id, name, invite_code, sample_label)

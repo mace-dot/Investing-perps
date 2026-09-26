@@ -51,7 +51,7 @@ export function PracticeList() {
                   {index + 1}. {lesson.topicId} · {status}
                 </p>
                 <h2 className="mt-1 text-2xl">{lesson.streetTitle}</h2>
-                <p className="mt-2 text-sm leading-6">{lesson.principle}</p>
+                <p className="mt-2 text-sm leading-6">{lesson.whenUseful}</p>
               </Link>
             </li>
           );
@@ -173,37 +173,42 @@ export function PracticeSession({ lessonId }: { lessonId: string }) {
   }
 
   const next = LESSONS[LESSONS.findIndex((item) => item.id === lesson.id) + 1];
+  const revealed = step === "feedback" || step === "done" || phase === "transfer";
 
   return (
     <div className="grid gap-4">
       <p className="text-sm font-semibold text-plum">Sample lesson · needs review · not expert-reviewed</p>
       <h1 className="text-4xl">{lesson.streetTitle}</h1>
-      <p className="text-lg leading-8">{lesson.principle}</p>
-      <section className="rounded-3xl border border-line bg-card p-4">
-        <h2 className="text-xl">A smaller example first</h2>
-        <p className="mt-2 leading-7">{lesson.workedExample}</p>
-        <p className="mt-3 text-sm leading-6"><span className="font-semibold">Useful when. </span>{lesson.whenUseful}</p>
-        <p className="mt-2 text-sm leading-6"><span className="font-semibold">Where it fails. </span>{lesson.whenItFails}</p>
-        <button type="button" className="mt-3 min-h-11 text-sm font-semibold text-plum" onClick={() => setFormalOpen((open) => !open)} aria-expanded={formalOpen}>
-          {formalOpen ? "Hide the textbook name" : "Show the textbook name"}
-        </button>
-        {formalOpen ? (
-          <div className="mt-2 text-sm leading-6">
-            <p>{lesson.formalName}</p>
-            <ul className="mt-2 grid gap-1">
-              {lesson.jargon.map((item) => (
-                <li key={item.term}>
-                  <span className="font-semibold">{item.term}.</span> {item.plain}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </section>
+      {revealed ? <p className="text-lg leading-8">{lesson.principle}</p> : <p className="leading-7">{lesson.whenUseful}</p>}
+      {revealed ? (
+        <section className="rounded-3xl border border-line bg-card p-4">
+          <h2 className="text-xl">The arithmetic, after your choice</h2>
+          <p className="mt-2 leading-7">{lesson.workedExample}</p>
+          <p className="mt-3 text-sm leading-6"><span className="font-semibold">Useful when. </span>{lesson.whenUseful}</p>
+          <p className="mt-2 text-sm leading-6"><span className="font-semibold">Where it fails. </span>{lesson.whenItFails}</p>
+          <p className="mt-2 text-sm leading-6">This name is a label, not evidence.</p>
+          <button type="button" className="mt-3 min-h-11 text-sm font-semibold text-plum" onClick={() => setFormalOpen((open) => !open)} aria-expanded={formalOpen}>
+            {formalOpen ? "Hide the textbook name" : "Show the textbook name"}
+          </button>
+          {formalOpen ? (
+            <div className="mt-2 text-sm leading-6">
+              <p>{lesson.formalName}</p>
+              <p className="mt-2">{lesson.framework}</p>
+              <ul className="mt-2 grid gap-1">
+                {lesson.jargon.map((item) => (
+                  <li key={item.term}>
+                    <span className="font-semibold">{item.term}.</span> {item.plain}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="btn-quiet" onClick={() => askCoach("simpler")}>Explain more simply</button>
-        <button type="button" className="btn-quiet" onClick={() => askCoach("example")}>Walk through the example</button>
+        {revealed ? <button type="button" className="btn-quiet" onClick={() => askCoach("simpler")}>Explain more simply</button> : null}
+        {revealed ? <button type="button" className="btn-quiet" onClick={() => askCoach("example")}>Walk through the example</button> : null}
         <button type="button" className="btn-quiet" onClick={() => askCoach("why")}>Why is my reasoning wrong?</button>
         <button type="button" className="btn-quiet" onClick={() => askCoach("fails")}>When does this rule fail?</button>
       </div>

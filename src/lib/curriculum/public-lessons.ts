@@ -385,7 +385,8 @@ export const LESSONS: PublicLesson[] = [
     estimatedMinutes: 4,
     curriculumVersion: version,
     reviewStatus: "needs_review",
-    framework: "Eugene Fama's caution — a price sums up a lot of information — and the value tradition's reply: you still have to notice how much hope that price contains.",
+    framework:
+      "Eugene Fama and Robert Shiller shared the 2013 prize in economic sciences. The committee did not crown a winner between them. A prize is not proof. This drill only asks which price needs the brighter future if this year's profit is the same.",
     principle:
       "If two prices are attached to the same current profit, the higher whole-business price is the one that requires a brighter future to work out. That does not say which future will happen.",
     workedExample:
@@ -396,7 +397,7 @@ export const LESSONS: PublicLesson[] = [
     exception: "Profit this year can be temporarily depressed or inflated. “Same profit” has to be a fair comparison.",
     formalName: "Valuation multiple as an expectation.",
     jargon: [{ term: "Multiple", plain: "How many years of current profit the price equals." }],
-    sources: [{ title: "Nobel lectures of Eugene Fama and Robert Shiller, 2013", note: "Further reading on information in prices and on swings in prices. Both are sketches here." }],
+    sources: [{ title: "Prize lectures of Eugene Fama and Robert Shiller, 2013", note: "Further reading. They shared the prize in economic sciences. It is not the Peace Prize, and it is not a check that this lesson is true." }],
     misconceptionTags: ["good_business_means_good_price", "lower_multiple_means_better_investment"],
     initial: {
       id: "q-expect-two-prices",

@@ -95,7 +95,7 @@ export const FRAMEWORKS: Framework[] = [
     id: "prices-hold-information",
     plainName: "A price already reflects a lot of public talk",
     formalName: "Efficient-market hypothesis, and its limit",
-    attributedTo: "Eugene Fama and Robert Shiller, who shared the 2013 economics prize and disagree on how wild prices can be",
+    attributedTo: "Eugene Fama and Robert Shiller shared the 2013 prize in economic sciences. The committee did not pick a winner between them. This is not the Nobel Peace Prize.",
     oneSentence: "Beating a price after costs is hard, and a price can still swing with a story. Both cautions can be true.",
     streetExplanation:
       "Do not treat a popular price as proof, and do not treat your hunch as proof you know more than everyone else. Use the business facts you can actually check.",
@@ -128,7 +128,7 @@ export const FRAMEWORKS: Framework[] = [
     id: "overconfidence",
     plainName: "Feeling sure is not the same as being right",
     formalName: "Overconfidence and loss aversion",
-    attributedTo: "Daniel Kahneman (2002 economics prize) and Richard Thaler (2017 economics prize)",
+    attributedTo: "Daniel Kahneman (2002) and Richard Thaler (2017), prizes in economic sciences, not the Peace Prize",
     oneSentence: "A correct guess with a contradictory explanation is not understanding, and confidence is not a point system.",
     streetExplanation:
       "Write the reason in words. If the reason fights the choice, believe the conflict. It is information about your understanding, not a score for bravery.",
@@ -139,7 +139,7 @@ export const FRAMEWORKS: Framework[] = [
     id: "lemons",
     plainName: "The seller may know something you do not",
     formalName: "Asymmetric information",
-    attributedTo: "George Akerlof, 2001 economics prize, the market for lemons",
+    attributedTo: "George Akerlof, 2001 prize in economic sciences, the market for lemons. Not the Peace Prize.",
     oneSentence: "When quality is hard to see, a shiny price or a shiny story is not proof.",
     streetExplanation:
       "A used bike looks the same on the curb whether it shifts cleanly or slips. Ask what the seller can see that you cannot, and what evidence would close that gap.",
@@ -150,13 +150,24 @@ export const FRAMEWORKS: Framework[] = [
     id: "access-is-not-a-good-deal",
     plainName: "Being allowed to borrow is not the same as a good deal",
     formalName: "Microcredit, with mixed later evidence",
-    attributedTo: "Muhammad Yunus, 2006 Nobel Peace Prize, for microcredit. Later studies of small loans are mixed.",
+    attributedTo: "Muhammad Yunus and Grameen Bank, 2006 Nobel Peace Prize, for microcredit. That prize is not the prize in economic sciences, and it is not a stock-picking award.",
     oneSentence: "Access to money can help a person start, and the terms can still be a bad bargain.",
     streetExplanation:
-      "A loan is a tool with a cost and a repayment. Celebrating access without the terms repeats the mistake this app is trying to avoid: a label standing in for the numbers.",
-    whenItFails: "Do not treat the prize, or any later headline, as proof that a particular loan helps.",
+      "A loan is a tool with a cost and a repayment. Later studies of small loans often found modest effects, not a transformation. High repayment is not proof the borrower was better off.",
+    whenItFails: "Do not treat the Peace Prize, or any later headline, as proof that a particular loan helps. This idea is not a share-price drill.",
     topicIds: ["cash", "thesis"],
   },
+];
+
+/**
+ * Famous frameworks do not all agree. The app does not pick a side.
+ * A name or a prize is a reading pointer, not evidence.
+ */
+export const IDEA_TENSIONS: string[] = [
+  "Spreading and concentrating disagree. Some writers stress mixing holdings that fail on different days. Others spend years on a few businesses they can explain. Neither habit is a buy instruction.",
+  "Eugene Fama and Robert Shiller shared one 2013 prize in economic sciences. One stressed how much information a price already holds. The other stressed stories that can still swing prices. The committee did not crown a winner.",
+  "A cushion under a cautious worth guess is not the same claim as “the market price is already the best estimate.” Both can be teaching notes. Neither is a recommendation.",
+  "Being allowed to borrow, including the microcredit idea behind a Peace Prize, is not the same as a good deal. Terms, cost, and later evidence still have to be read.",
 ];
 
 export function frameworksForTopic(topicId: string): Framework[] {

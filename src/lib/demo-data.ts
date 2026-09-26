@@ -93,7 +93,7 @@ export const SAMPLE_POSTS: DemoPost[] = [
     authorKind: "editorial",
     sample: true,
     topicId: "valuation",
-    title: "An $8 share can be the expensive one",
+    title: "The sticker is not the whole price",
     createdAt: now - day,
     editedAt: null,
     clubId: null,
@@ -103,7 +103,7 @@ export const SAMPLE_POSTS: DemoPost[] = [
       principle:
         "The sticker on one share is not the price of the business. Multiply the share price by the number of shares. Then compare that whole price with a year of profit.",
       example:
-        "Company A at $8 with 1 billion shares costs $8 billion and earned $40 million. Company B at $80 with 10 million shares costs $800 million and earned the same $40 million. B is the lower price compared with profit.",
+        "A lemonade stand sold for $8 a cup can still be the more expensive business if there are far more cups. The scored drill keeps that arithmetic until after you choose.",
       whenUseful: "When someone calls a stock cheap only because the share price looks small.",
       whenItFails: "A lower comparison with this year’s profit does not make a better investment by itself.",
     },

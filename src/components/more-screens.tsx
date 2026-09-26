@@ -5,7 +5,7 @@ import { useState } from "react";
 import { accuracyFrom, lessonProgress, useApp } from "@/components/app-state";
 import { EmptyState } from "@/components/feed-screen";
 import { COMMUNITY_RULES, SAMPLE_RANKING, postReadingMinutes } from "@/lib/demo-data";
-import { FRAMEWORKS } from "@/lib/curriculum/frameworks";
+import { FRAMEWORKS, IDEA_TENSIONS } from "@/lib/curriculum/frameworks";
 import { LESSONS } from "@/lib/curriculum/public-lessons";
 import { TOPICS } from "@/lib/curriculum/types";
 import { accuracyLabel } from "@/lib/scoring";
@@ -342,7 +342,13 @@ export function FrameworksScreen() {
   return (
     <div>
       <h1 className="text-4xl">Ideas in plain words</h1>
-      <p className="mt-2 leading-7">These are teaching notes marked needs review. A prize or a famous name is not evidence that a financial claim is true.</p>
+      <p className="mt-2 leading-7">These are teaching notes marked needs review. A prize or a famous name is not evidence that a financial claim is true. When a note says prize in economic sciences, that is not the Nobel Peace Prize.</p>
+      <section className="mt-4 grid gap-3">
+        <h2 className="text-2xl">These ideas do not all agree</h2>
+        {IDEA_TENSIONS.map((line) => (
+          <p key={line} className="rounded-3xl bg-card p-4 leading-7">{line}</p>
+        ))}
+      </section>
       <div className="mt-4 grid gap-3">
         {FRAMEWORKS.map((item) => (
           <article key={item.id} className="rounded-3xl border border-line bg-card p-4">

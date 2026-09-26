@@ -13,12 +13,12 @@ const bodySchema = z.object({
 const textSchema = z.object({ text: z.string().min(1).max(700) });
 
 function canonicalCoach(action: string, lesson: NonNullable<ReturnType<typeof lessonById>>, submitted: boolean) {
+  if (!submitted && (action === "simpler" || action === "example" || action === "why")) {
+    return `Before you submit, this is a hint rather than the answer. ${lesson.initial.hint}`;
+  }
   if (action === "simpler") return lesson.principle;
   if (action === "example") return lesson.workedExample;
   if (action === "fails") return lesson.exception;
-  if (!submitted) {
-    return `Before you submit, this is a hint rather than the answer. ${lesson.initial.hint}`;
-  }
   return `${lesson.ruleOfThumb} ${lesson.exception}`;
 }
 
@@ -52,16 +52,24 @@ export async function POST(request: Request) {
     'Return JSON: {"text":"..."}',
   ].join(" ");
 
-  const user = JSON.stringify({
-    action: parsed.data.action,
-    principle: lesson.principle,
-    example: lesson.workedExample,
-    whenItFails: lesson.whenItFails,
-    ruleOfThumb: lesson.ruleOfThumb,
-    exception: lesson.exception,
-    hint: lesson.initial.hint,
-    studentText: parsed.data.explanation ?? "",
-  });
+  const user = JSON.stringify(
+    parsed.data.submitted
+      ? {
+          action: parsed.data.action,
+          principle: lesson.principle,
+          example: lesson.workedExample,
+          whenItFails: lesson.whenItFails,
+          ruleOfThumb: lesson.ruleOfThumb,
+          exception: lesson.exception,
+          hint: lesson.initial.hint,
+          studentText: parsed.data.explanation ?? "",
+        }
+      : {
+          action: parsed.data.action,
+          hint: lesson.initial.hint,
+          studentText: parsed.data.explanation ?? "",
+        },
+  );
 
   const model = await completeJson({ system, user });
   if (!model.ok) {
