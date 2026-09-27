@@ -59,6 +59,10 @@ export function FeedScreen() {
       <p className="mt-2 max-w-xl text-base leading-7 text-muted">
         For You uses your topics, recent misses, people you follow, and posts you have not opened. It is not an AI ranking, and popularity is not evidence.
       </p>
+      <p className="mt-3 max-w-xl leading-7">
+        <Link href="/filings" className="font-semibold text-teal">Read a 10-K</Link>
+        <span className="text-muted"> against a goal you choose. The app can pull the latest annual report from the SEC, or you can upload a file. Neither one is a recommendation.</span>
+      </p>
       <div className="mt-4 flex gap-2 overflow-x-auto" role="tablist" aria-label="Feed filters">
         {FILTERS.map((item) => (
           <button

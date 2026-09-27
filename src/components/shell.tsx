@@ -9,6 +9,7 @@ import { lessonProgress, useApp } from "./app-state";
 const NAV = [
   { href: "/", label: "Feed" },
   { href: "/practice", label: "Practice" },
+  { href: "/filings", label: "Filings" },
   { href: "/create", label: "Create" },
   { href: "/rankings", label: "Rankings" },
   { href: "/profile", label: "Profile" },
@@ -106,13 +107,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
           ) : null}
         </section>
       </aside>
-      <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-card px-1 py-1 lg:hidden">
+      <nav aria-label="Primary" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-6 border-t border-line bg-card px-1 py-1 lg:hidden">
         {NAV.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             aria-current={pathname === item.href ? "page" : undefined}
-            className={`flex min-h-11 items-center justify-center rounded-2xl text-center text-xs font-semibold ${pathname === item.href ? "bg-teal text-white" : "text-ink"}`}
+            className={`flex min-h-11 items-center justify-center rounded-2xl px-0.5 text-center text-[11px] font-semibold leading-tight ${pathname === item.href ? "bg-teal text-white" : "text-ink"}`}
           >
             {item.label}
           </Link>

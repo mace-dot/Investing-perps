@@ -48,6 +48,14 @@ Leave `AI_API_KEY` empty to keep canonical feedback. If you set a key, lesson he
 
 The rate limit in this MVP is in server memory unless you later wire `private.rate_limits`. Memory limits do not span multiple server instances.
 
+## Filings
+
+Open Filings and enter a ticker or company name. The app pulls the latest 10-K and the standardized financial statements from the SEC EDGAR site. You can also upload a 10-K as HTML, text, or PDF. The upload is read in memory and is not saved.
+
+Set `SEC_USER_AGENT` to your name and a contact email. The SEC refuses requests that do not identify the reader.
+
+The page compares the filing with a goal you choose, such as safer and more stable. The figures come from the filing. A model, if configured, may rephrase that reading and is discarded when it invents a number or gives a buy, sell, or hold instruction. With no AI key, the reading is still produced from the filing.
+
 ## Scripts
 
 ```bash
