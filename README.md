@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open the feed, then Practice, and start “A cheap-looking share can be an expensive business.”
+Open the feed. For You is a vertical scroll of one idea at a time. Pick a goal and the order follows it. Then open Practice. The app does not connect to a brokerage.
 
 ## Database
 
@@ -44,7 +44,7 @@ The seeded lessons are `needs_review`. The sample weekly challenge is `draft`. P
 
 ## AI
 
-Leave `AI_API_KEY` empty to keep canonical feedback. If you set a key, lesson help and composer suggestions go to the OpenAI-compatible URL in `AI_BASE_URL` (the Vercel AI Gateway by default). The app checks the JSON shape. A timeout, a bad payload, or a missing key falls back to the lesson text and says so. Composer suggestions are never published automatically.
+Leave `AI_API_KEY` empty to keep canonical feedback. If you set a key, lesson help and composer suggestions go to the OpenAI-compatible URL in `AI_BASE_URL` (the Vercel AI Gateway by default). The app checks the JSON shape. A timeout, a bad payload, or a missing key falls back to the lesson text and says so. Composer suggestions are never published automatically. On Create, “Write the reading” turns your notes into a cover and a short essay. With no key, it only rearranges those notes. A reply that adds a dollar amount or says buy, sell, or hold is discarded. Download text saves that reading as a file on your device.
 
 The rate limit in this MVP is in server memory unless you later wire `private.rate_limits`. Memory limits do not span multiple server instances.
 

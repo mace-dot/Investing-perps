@@ -81,6 +81,33 @@ select {
   opacity: 0.55;
 }
 
+.learn-scroll {
+  height: calc(100dvh - 22rem);
+  min-height: 24rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+}
+
+.learn-slide {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 100%;
+  overflow-y: auto;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.learn-slide + .learn-slide {
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .learn-scroll {
+    height: calc(100dvh - 16rem);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -89,5 +116,14 @@ select {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .learn-scroll {
+    scroll-snap-type: none;
+  }
+
+  .learn-slide {
+    height: auto;
+    scroll-snap-align: none;
   }
 }

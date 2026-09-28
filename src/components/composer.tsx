@@ -3,25 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApp } from "@/components/app-state";
+import { EssayPost } from "@/components/essay-post";
+import { fieldPrompts, plainDocument, type ComposeKind } from "@/lib/compose-doc";
 import { TOPICS } from "@/lib/curriculum/types";
 import { safeHttpUrl } from "@/lib/urls";
 
-type Kind = "technique" | "thesis";
-
-const TECHNIQUE = [
-  ["principle", "What is the technique?"],
-  ["example", "Show an example"],
-  ["whenUseful", "When would someone use it?"],
-  ["whenItFails", "When might it mislead?"],
-] as const;
-
-const THESIS = [
-  ["claim", "What do you believe?"],
-  ["evidence", "What evidence supports it?"],
-  ["assumptions", "What assumptions must hold?"],
-  ["counterargument", "What is the strongest counterargument?"],
-  ["changeMind", "What would change your mind?"],
-] as const;
+type Kind = ComposeKind;
 
 const DRAFT_KEY = "investing-reps-composer-draft";
 
@@ -33,6 +20,9 @@ export function Composer({ editId }: { editId?: string }) {
   const [title, setTitle] = useState(existing?.title ?? "");
   const [topicId, setTopicId] = useState(existing?.topicId ?? "valuation");
   const [fields, setFields] = useState<Record<string, string>>(existing?.fields ?? {});
+  const [notes, setNotes] = useState("");
+  const [essay, setEssay] = useState(existing?.fields.essay ?? "");
+  const [hook, setHook] = useState(existing?.fields.hook ?? "");
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceDate, setSourceDate] = useState("");
@@ -48,24 +38,27 @@ export function Composer({ editId }: { editId?: string }) {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
     try {
-      const draft = JSON.parse(raw) as { kind: Kind; title: string; topicId: string; fields: Record<string, string> };
+      const draft = JSON.parse(raw) as { kind: Kind; title: string; topicId: string; fields: Record<string, string>; notes?: string; essay?: string; hook?: string };
       setKind(draft.kind);
       setTitle(draft.title);
       setTopicId(draft.topicId);
       setFields(draft.fields);
+      setNotes(draft.notes ?? "");
+      setEssay(draft.essay ?? "");
+      setHook(draft.hook ?? "");
     } catch {
       localStorage.removeItem(DRAFT_KEY);
     }
   }, [editId]);
 
-  const prompts = kind === "technique" ? TECHNIQUE : THESIS;
+  const prompts = fieldPrompts(kind);
 
   function fieldKey(label: string) {
     return prompts.find((item) => item[1] === label)?.[0] ?? label;
   }
 
   function saveDraft() {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ kind, title, topicId, fields }));
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ kind, title, topicId, fields, notes, essay, hook }));
     setNote("Draft saved in this browser. It is not in Supabase.");
   }
 
@@ -76,7 +69,7 @@ export function Composer({ editId }: { editId?: string }) {
       return;
     }
     if (existing) {
-      app.updatePost(existing.id, fields, title.trim());
+      app.updatePost(existing.id, { ...fields, hook, essay }, title.trim());
       router.push(`/posts/${existing.id}`);
       return;
     }
@@ -89,7 +82,12 @@ export function Composer({ editId }: { editId?: string }) {
       title: title.trim(),
       clubId: null,
       lessonId: null,
-      fields: { ...fields, asOf: kind === "thesis" ? new Date().toISOString().slice(0, 10) : "" },
+      fields: {
+        ...fields,
+        hook,
+        essay,
+        asOf: kind === "thesis" ? new Date().toISOString().slice(0, 10) : "",
+      },
       sources,
       aiAssisted,
     });
@@ -113,6 +111,42 @@ export function Composer({ editId }: { editId?: string }) {
     setNote(body.note ?? "Suggestion only.");
   }
 
+  async function writeFromNotes() {
+    setError(null);
+    setNote("Turning your notes into a short reading.");
+    const response = await fetch("/api/ai/composer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "polish", kind, notes, title }),
+    });
+    const body = await response.json();
+    if (!response.ok) {
+      setError(body.error ?? "The notes could not be turned into a reading.");
+      setNote(null);
+      return;
+    }
+    const document = body.document as { title: string; hook: string; essay: string; fields: Record<string, string> };
+    setTitle(document.title);
+    setHook(document.hook);
+    setEssay(document.essay);
+    setFields((current) => ({ ...current, ...document.fields }));
+    if (body.source === "model") setAiAssisted(true);
+    setPreview(true);
+    setNote(body.note ?? "Reading ready. Nothing was published.");
+  }
+
+  function downloadText() {
+    const topic = TOPICS.find((item) => item.id === topicId)?.name ?? topicId;
+    const text = plainDocument({ title, topic, essay, prompts, fields });
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "investing-reps-note.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (!app.ready) return <p role="status">Loading the composer</p>;
   if (editId && !existing) {
     return <p>That draft is not one of yours on this device. Sample posts stay as samples.</p>;
@@ -121,7 +155,23 @@ export function Composer({ editId }: { editId?: string }) {
   return (
     <div>
       <h1 className="text-4xl">{existing ? "Edit post" : "Create"}</h1>
-      <p className="mt-2 leading-7 text-muted">Guided fields, not a blank box. Publishing in demo mode stays on this device.</p>
+      <p className="mt-2 leading-7 text-muted">
+        Start with a few notes. The writer turns them into a short reading with a cover, like a post you can scroll past, and the reasoning stays in the boxes. Publishing in demo mode stays on this device.
+      </p>
+      <label className="mt-4 block text-sm font-semibold">
+        Rough notes
+        <textarea
+          value={notes}
+          maxLength={4000}
+          rows={5}
+          placeholder="Two or three sentences in your own words."
+          onChange={(event) => setNotes(event.target.value)}
+          className="mt-2 w-full rounded-2xl border border-line bg-card p-3"
+        />
+      </label>
+      <button type="button" className="btn-primary mt-3" onClick={() => void writeFromNotes()}>
+        Write the reading
+      </button>
       {!existing ? (
         <div className="mt-4 flex gap-2">
           <button type="button" className={kind === "technique" ? "btn-primary" : "btn-quiet"} onClick={() => setKind("technique")}>Share a technique</button>
@@ -216,17 +266,24 @@ export function Composer({ editId }: { editId?: string }) {
       <div className="mt-4 flex flex-wrap gap-2">
         <button type="button" className="btn-quiet" onClick={saveDraft}>Save draft</button>
         <button type="button" className="btn-quiet" onClick={() => setPreview((value) => !value)}>{preview ? "Hide preview" : "Preview"}</button>
+        <button type="button" className="btn-quiet" onClick={downloadText}>Download text</button>
         <button type="button" className="btn-primary" onClick={publish}>{existing ? "Save edit" : "Publish"}</button>
       </div>
       {preview ? (
-        <article className="mt-4 rounded-3xl border border-line bg-card p-4">
-          <p className="text-sm text-plum">Preview · community post · not a trading signal</p>
-          <h2 className="mt-2 text-2xl">{title || "Untitled"}</h2>
-          {prompts.map(([key, label]) => (
-            <p key={key} className="mt-2 leading-7"><span className="font-semibold">{label} </span>{fields[key]}</p>
-          ))}
-          {kind === "thesis" ? <p className="mt-2 text-sm">An educational discussion, not a trading signal.</p> : null}
-        </article>
+        <div className="mt-4">
+          <EssayPost
+            title={title}
+            hook={hook || fields.principle || fields.claim || ""}
+            essay={essay}
+            topic={TOPICS.find((topic) => topic.id === topicId)?.name ?? topicId}
+            kicker="Preview · a reading, not a transaction"
+          />
+          <div className="mx-auto mt-4 max-w-prose">
+            {prompts.map(([key, label]) => (
+              <p key={key} className="mt-3 leading-7"><span className="text-sm font-semibold text-plum">{label} </span>{fields[key]}</p>
+            ))}
+          </div>
+        </div>
       ) : null}
     </div>
   );

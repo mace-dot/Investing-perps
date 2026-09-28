@@ -21,13 +21,33 @@ export type FilingExcerpt = {
   text: string;
 };
 
+export type StatementLine = {
+  label: string;
+  formal: string;
+  value: string;
+  prior: string | null;
+  means: string;
+};
+
+export type StatementSheet = {
+  id: "income" | "balance" | "cash";
+  kicker: string;
+  title: string;
+  plain: string;
+  lines: StatementLine[];
+};
+
+export type ReportSpan = "annual" | "quarter";
+
 export type FilingReading = {
   source: FilingSource;
   companyName: string;
   ticker: string | null;
   cik: string | null;
   form: string | null;
+  periodKind: ReportSpan;
   periodEnd: string | null;
+  sheets: StatementSheet[];
   filed: string | null;
   filingUrl: string | null;
   goal: InvestingGoal;

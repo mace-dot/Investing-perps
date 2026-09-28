@@ -31,6 +31,13 @@ export const composerSuggestionSchema = z.object({
   why: z.string().min(1).max(300),
 });
 
+export const composeDocumentSchema = z.object({
+  title: z.string().min(3).max(140),
+  hook: z.string().min(8).max(220),
+  essay: z.string().min(40).max(4000),
+  fields: z.record(z.string().max(2000)),
+});
+
 export type ComposerSuggestion = z.infer<typeof composerSuggestionSchema>;
 
 export function parseReasoning(payload: unknown, allowedTags: readonly string[]): ReasoningResult | null {

@@ -57,7 +57,7 @@ export function archivesUrl(cik: string, accession: string, primaryDocument: str
   return `https://www.sec.gov/Archives/edgar/data/${numericCik}/${compact}/${primaryDocument}`;
 }
 
-export function latestAnnualFiling(payload: unknown): {
+export function latestFiling(payload: unknown, form: "10-K" | "10-Q"): {
   accession: string;
   primaryDocument: string;
   filed: string;
@@ -66,7 +66,7 @@ export function latestAnnualFiling(payload: unknown): {
   const recent = (payload as { filings?: { recent?: Record<string, string[]> } })?.filings?.recent;
   if (!recent?.form || !recent.accessionNumber || !recent.primaryDocument) return null;
   for (let index = 0; index < recent.form.length; index += 1) {
-    if (recent.form[index] !== "10-K") continue;
+    if (recent.form[index] !== form) continue;
     const accession = recent.accessionNumber[index];
     const primaryDocument = recent.primaryDocument[index];
     if (!accession || !primaryDocument) return null;

@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useApp } from "@/components/app-state";
 import { formatPeriodEnd } from "@/lib/filings/format";
-import { GOAL_LABELS, type CompanyMatch, type FilingReading, type InvestingGoal } from "@/lib/filings/types";
+import { GOAL_LABELS, type CompanyMatch, type FilingReading, type InvestingGoal, type ReportSpan, type StatementSheet } from "@/lib/filings/types";
 
 const GOALS: InvestingGoal[] = ["stability", "growth", "income"];
 
 export function FilingReader() {
   const app = useApp();
   const [goal, setGoal] = useState<InvestingGoal | null>(null);
+  const [period, setPeriod] = useState<ReportSpan>("annual");
   const [query, setQuery] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [pending, setPending] = useState(false);
@@ -30,6 +31,7 @@ export function FilingReader() {
     setMatches(null);
     const form = new FormData();
     form.set("goal", selected);
+    form.set("period", period);
     form.set("query", nextQuery);
     if (file) form.set("file", file);
     try {
@@ -60,10 +62,22 @@ export function FilingReader() {
   return (
     <div className="grid gap-4">
       <p className="text-sm font-semibold text-plum">SEC filings · not a recommendation</p>
-      <h1 className="text-4xl">Read a 10-K</h1>
+      <h1 className="text-4xl">Read a filing</h1>
       <p className="max-w-xl leading-7">
-        Enter a ticker or company name and the app pulls the latest annual report from the SEC. You can also upload a 10-K if you already have the file. The upload is not saved. The reading says what the numbers and the notes indicate, then compares that with a goal you choose.
+        Enter a ticker or company name. The app pulls the income statement, the balance sheet, and the cash flow statement from the SEC, for the latest year or the latest quarter. You can also upload a report if you already have the file. The upload is not saved.
       </p>
+      <fieldset>
+        <legend className="text-sm font-semibold">Which report?</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" className={period === "annual" ? "btn-primary" : "btn-quiet"} onClick={() => setPeriod("annual")}>Latest year</button>
+          <button type="button" className={period === "quarter" ? "btn-primary" : "btn-quiet"} onClick={() => setPeriod("quarter")}>Latest quarter</button>
+        </div>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          {period === "annual"
+            ? "The latest year is the 10-K. It is the full-year story."
+            : "The latest quarter is the 10-Q. It is a shorter update, not the whole year."}
+        </p>
+      </fieldset>
       <fieldset>
         <legend className="text-sm font-semibold">What pattern are you comparing this with?</legend>
         <div className="mt-2 grid gap-2">
@@ -102,7 +116,7 @@ export function FilingReader() {
           />
         </label>
         <label className="text-sm font-semibold">
-          Or upload a 10-K
+          Or upload a report
           <input
             type="file"
             accept=".htm,.html,.txt,.pdf,text/html,text/plain,application/pdf"
@@ -117,7 +131,11 @@ export function FilingReader() {
       <p className="text-sm leading-6 text-muted">
         This is a reading of a filing against a goal you chose. It does not tell you what to do with your money. A famous company is not evidence that the pattern fits you.
       </p>
-      {pending ? <p role="status">Pulling the annual report and the standardized statements.</p> : null}
+      {pending ? (
+        <p role="status">
+          {period === "quarter" ? "Pulling the quarterly report and the three statements." : "Pulling the annual report and the three statements."}
+        </p>
+      ) : null}
       {error ? <p className="rounded-2xl border border-line bg-card px-4 py-3 text-sm leading-6" role="alert">{error}</p> : null}
       {matches ? (
         <section className="grid gap-2">
@@ -150,13 +168,18 @@ function ReadingView({ reading }: { reading: FilingReading }) {
         <h2 className="text-3xl">{reading.companyName}{reading.ticker ? ` · ${reading.ticker}` : ""}</h2>
         <p className="mt-2 text-sm leading-6 text-muted">
           {reading.form ?? "Filing"}
-          {reading.periodEnd ? ` · year ended ${formatPeriodEnd(reading.periodEnd)}` : ""}
+          {reading.periodEnd ? ` · ${reading.periodKind === "quarter" ? "quarter" : "year"} ended ${formatPeriodEnd(reading.periodEnd)}` : ""}
           {reading.filed ? ` · filed ${formatPeriodEnd(reading.filed)}` : ""}
           {" · "}compared with {reading.goalLabel}
         </p>
       </header>
       <p className="rounded-3xl border border-line bg-card p-4 leading-7">{reading.notAdvice}</p>
       <p className="text-lg leading-8">{reading.overview}</p>
+      <div className="grid gap-3">
+        {reading.sheets.map((sheet) => (
+          <StatementCard key={sheet.id} sheet={sheet} />
+        ))}
+      </div>
       <p className="text-sm leading-6 text-muted">{reading.proseNote}</p>
       <section className="rounded-3xl border border-line bg-card p-4">
         <h3 className="text-2xl">{reading.alignment.headline}</h3>
@@ -169,7 +192,7 @@ function ReadingView({ reading }: { reading: FilingReading }) {
             <ul className="mt-2 grid gap-1">
               {section.figures.map((figure) => (
                 <li key={`${section.id}-${figure.label}-${figure.periodEnd}`}>
-                  <span className="font-semibold">{figure.value}.</span> {figure.label} Year ended {figure.periodEnd}.
+                  <span className="font-semibold">{figure.value}.</span> {figure.label} {reading.periodKind === "quarter" ? "Quarter ended" : "Year ended"} {figure.periodEnd}.
                 </li>
               ))}
             </ul>
@@ -192,11 +215,42 @@ function ReadingView({ reading }: { reading: FilingReading }) {
       </section>
       {reading.filingUrl ? (
         <p className="break-all text-sm leading-6">
-          <a className="font-semibold text-teal" href={reading.filingUrl} target="_blank" rel="noreferrer">Open the 10-K on the SEC site</a>
+          <a className="font-semibold text-teal" href={reading.filingUrl} target="_blank" rel="noreferrer">
+            Open the {reading.form === "10-Q" ? "10-Q" : "10-K"} on the SEC site
+          </a>
         </p>
       ) : (
         <p className="text-sm leading-6 text-muted">No SEC link is attached. This reading used the uploaded file only, so standardized totals were not added.</p>
       )}
     </article>
+  );
+}
+
+function StatementCard({ sheet }: { sheet: StatementSheet }) {
+  const [formalOpen, setFormalOpen] = useState(false);
+  return (
+    <section className="rounded-3xl border border-line bg-card p-4">
+      <p className="text-sm font-semibold text-plum">{sheet.kicker}</p>
+      <h3 className="mt-1 text-2xl">{sheet.title}</h3>
+      <p className="mt-2 leading-7">{sheet.plain}</p>
+      {sheet.lines.length === 0 ? (
+        <p className="mt-3 text-sm leading-6">This statement was not in the structured figures for that period.</p>
+      ) : (
+        <ul className="mt-3 grid gap-3">
+          {sheet.lines.map((line) => (
+            <li key={line.formal} className="rounded-2xl bg-paper px-3 py-3">
+              <p className="font-serif text-3xl">{line.value}</p>
+              <p className="mt-1 font-semibold">{line.label}</p>
+              <p className="mt-1 leading-7">{line.means}</p>
+              {line.prior ? <p className="mt-1 text-sm leading-6 text-muted">{line.prior}</p> : null}
+              {formalOpen ? <p className="mt-1 text-sm text-muted">Accounting name: {line.formal}. The name is a label, not evidence.</p> : null}
+            </li>
+          ))}
+        </ul>
+      )}
+      <button type="button" className="mt-3 min-h-11 text-sm font-semibold text-plum" aria-expanded={formalOpen} onClick={() => setFormalOpen((open) => !open)}>
+        {formalOpen ? "Hide the accounting names" : "Show the accounting names"}
+      </button>
+    </section>
   );
 }

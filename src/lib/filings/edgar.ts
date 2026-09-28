@@ -1,6 +1,6 @@
-import { rowsFromTickerFile, resolveCompany, archivesUrl, latestAnnualFiling, type TickerRow } from "@/lib/filings/companies";
+import { rowsFromTickerFile, resolveCompany, archivesUrl, latestFiling, type TickerRow } from "@/lib/filings/companies";
 import { htmlToPlain } from "@/lib/filings/excerpts";
-import { emptyStatements, statementSetFromFacts, type CompanyFacts } from "@/lib/filings/facts";
+import { emptyStatements, statementSetFromFacts, type CompanyFacts, type ReportPeriod } from "@/lib/filings/facts";
 import { buildFilingReading } from "@/lib/filings/reading";
 import type { CompanyMatch, FilingReading, InvestingGoal } from "@/lib/filings/types";
 
@@ -60,7 +60,7 @@ export async function loadFacts(cik: string, fetchImpl: typeof fetch, env: NodeJ
   return facts;
 }
 
-async function loadNarrative(cik: string, fetchImpl: typeof fetch, env: NodeJS.ProcessEnv): Promise<{
+async function loadNarrative(cik: string, form: "10-K" | "10-Q", fetchImpl: typeof fetch, env: NodeJS.ProcessEnv): Promise<{
   plain: string;
   form: string;
   filed: string;
@@ -72,27 +72,28 @@ async function loadNarrative(cik: string, fetchImpl: typeof fetch, env: NodeJS.P
   } catch {
     return null;
   }
-  const filing = latestAnnualFiling(submissions);
+  const filing = latestFiling(submissions, form);
   if (!filing) return null;
   const filingUrl = archivesUrl(cik, filing.accession, filing.primaryDocument);
   try {
     const response = await secFetch(filingUrl, fetchImpl, env);
-    if (!response.ok) return { plain: "", form: "10-K", filed: filing.filed, filingUrl };
+    if (!response.ok) return { plain: "", form, filed: filing.filed, filingUrl };
     const length = Number(response.headers.get("content-length") || 0);
-    if (length > 6_000_000) return { plain: "", form: "10-K", filed: filing.filed, filingUrl };
+    if (length > 6_000_000) return { plain: "", form, filed: filing.filed, filingUrl };
     const bytes = await response.arrayBuffer();
-    if (bytes.byteLength > 6_000_000) return { plain: "", form: "10-K", filed: filing.filed, filingUrl };
+    if (bytes.byteLength > 6_000_000) return { plain: "", form, filed: filing.filed, filingUrl };
     const raw = new TextDecoder().decode(bytes);
     const plain = /<html|<p\b|<div\b/i.test(raw) ? htmlToPlain(raw) : raw;
-    return { plain: plain.slice(0, 180_000), form: "10-K", filed: filing.filed, filingUrl };
+    return { plain: plain.slice(0, 180_000), form, filed: filing.filed, filingUrl };
   } catch {
-    return { plain: "", form: "10-K", filed: filing.filed, filingUrl };
+    return { plain: "", form, filed: filing.filed, filingUrl };
   }
 }
 
 export async function pullFiling(input: {
   query: string;
   goal: InvestingGoal;
+  period?: ReportPeriod;
   uploadText?: string;
   fetchImpl?: typeof fetch;
   env?: NodeJS.ProcessEnv;
@@ -111,8 +112,10 @@ export async function pullFiling(input: {
     };
   }
 
+  const period = input.period ?? "annual";
+  const secForm = period === "quarter" ? "10-Q" : "10-K";
   const facts = await loadFacts(resolved.row.cik, fetchImpl, env);
-  const narrative = await loadNarrative(resolved.row.cik, fetchImpl, env);
+  const narrative = await loadNarrative(resolved.row.cik, secForm, fetchImpl, env);
   const upload = input.uploadText?.trim() ?? "";
   const plainText = upload.length > 80 ? upload : narrative?.plain ?? "";
   const source = upload.length > 80 ? "edgar-and-upload" : "edgar";
@@ -120,12 +123,13 @@ export async function pullFiling(input: {
     companyName: facts.entityName || resolved.row.name,
     ticker: resolved.row.ticker,
     cik: resolved.row.cik,
-    form: narrative?.form ?? "10-K",
+    form: narrative?.form ?? secForm,
     filed: narrative?.filed || null,
     filingUrl: narrative?.filingUrl ?? null,
     goal: input.goal,
+    periodKind: period,
     source,
-    statements: statementSetFromFacts(facts),
+    statements: statementSetFromFacts(facts, period),
     plainText,
   });
   return { kind: "reading", reading };
@@ -141,6 +145,7 @@ export function readingFromUpload(input: { fileName: string; text: string; goal:
     filed: null,
     filingUrl: null,
     goal: input.goal,
+    periodKind: "annual",
     source: "upload",
     statements: emptyStatements(),
     plainText: input.text,

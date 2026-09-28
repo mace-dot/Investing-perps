@@ -1,6 +1,7 @@
-import { changeRatio, latest, prior, type StatementSet } from "@/lib/filings/facts";
+import { changeRatio, latest, prior, type ReportPeriod, type StatementSet } from "@/lib/filings/facts";
 import { describeChange, formatPeriodEnd, formatUsd } from "@/lib/filings/format";
 import { excerptsFromPlain, joinedExcerptText } from "@/lib/filings/excerpts";
+import { buildSheets } from "@/lib/filings/sheets";
 import { GOAL_LABELS, NOT_ADVICE, type FilingExcerpt, type FilingReading, type FilingSection, type FilingSource, type InvestingGoal } from "@/lib/filings/types";
 
 export type ReadingInput = {
@@ -11,6 +12,7 @@ export type ReadingInput = {
   filed: string | null;
   filingUrl: string | null;
   goal: InvestingGoal;
+  periodKind?: ReportPeriod;
   source: FilingSource;
   statements: StatementSet;
   plainText: string;
@@ -27,7 +29,9 @@ export function buildFilingReading(input: ReadingInput): FilingReading {
     ticker: input.ticker,
     cik: input.cik,
     form: input.form,
+    periodKind: input.periodKind ?? "annual",
     periodEnd: period,
+    sheets: buildSheets(input.statements, input.periodKind ?? "annual"),
     filed: input.filed,
     filingUrl: input.filingUrl,
     goal: input.goal,
@@ -45,7 +49,8 @@ export function buildFilingReading(input: ReadingInput): FilingReading {
 
 function overview(input: ReadingInput, sections: FilingSection[], headline: string, period: string | null): string {
   const who = input.ticker ? `${input.companyName} (${input.ticker})` : input.companyName;
-  const when = period ? ` for the year ended ${formatPeriodEnd(period)}` : "";
+  const span = input.periodKind === "quarter" ? "quarter" : "year";
+  const when = period ? ` for the ${span} ended ${formatPeriodEnd(period)}` : "";
   if (sections.length === 0) {
     return `${who}${when}. This reading uses the words in the document. Standardized statement totals were not pulled, so dollar totals are not invented here. ${headline}`;
   }

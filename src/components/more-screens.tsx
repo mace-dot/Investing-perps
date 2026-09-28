@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { accuracyFrom, lessonProgress, useApp } from "@/components/app-state";
+import { EssayPost } from "@/components/essay-post";
 import { EmptyState } from "@/components/feed-screen";
+import { fieldPrompts } from "@/lib/compose-doc";
 import { COMMUNITY_RULES, SAMPLE_RANKING, postReadingMinutes } from "@/lib/demo-data";
 import { FRAMEWORKS, IDEA_TENSIONS } from "@/lib/curriculum/frameworks";
 import { LESSONS } from "@/lib/curriculum/public-lessons";
 import { TOPICS } from "@/lib/curriculum/types";
+import { GOAL_LABELS } from "@/lib/filings/types";
 import { accuracyLabel } from "@/lib/scoring";
 
 export function RankingsScreen() {
@@ -74,6 +77,8 @@ export function ProfileScreen() {
       <p className="mt-2 leading-7">{app.profile?.bio || "No bio yet."}</p>
       <p className="mt-1 text-sm">{app.profile?.clubCode === "CAMPUS-DEMO" ? "Sample club: North Quad Investment Club" : "No club"}</p>
       <p className="mt-1 text-sm">Global ranking: {app.profile?.showOnGlobalRanking ? "Opted in" : "Excluded by default"}</p>
+      <p className="mt-1 text-sm">Goal: {app.investingGoal ? GOAL_LABELS[app.investingGoal] : "Not chosen yet. The feed uses it to order the scroll."}</p>
+      <p className="mt-3 max-w-xl text-sm leading-6 text-muted">A brokerage is not connected. Linking one is not available. This app does not place trades or tell you what to buy or sell.</p>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link href="/onboarding" className="btn-primary">Edit profile</Link>
         <Link href="/settings" className="btn-quiet">Export or delete</Link>
@@ -226,16 +231,19 @@ export function PostScreen({ postId }: { postId: string }) {
   return (
     <article>
       <p className="text-sm text-muted">{post.authorName} {post.sample ? "· Fictional sample" : "· On this device"} · {postReadingMinutes(post)} min</p>
-      <h1 className="mt-2 text-4xl">{post.title}</h1>
       {post.editedAt ? <p className="mt-1 text-sm">Edited {new Date(post.editedAt).toLocaleString()}</p> : null}
-      <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
-        <span className="rounded-full bg-card px-2 py-1">{post.topicName}</span>
-        <span className="rounded-full bg-card px-2 py-1">{post.type}</span>
-        <span className="rounded-full bg-card px-2 py-1">{post.authorKind === "editorial" ? "Sample curriculum · needs review" : "Community"}</span>
+      <div className="mt-3">
+        <EssayPost
+          title={post.title}
+          hook={post.fields.hook || firstReading(post.fields)}
+          essay={post.fields.essay || ""}
+          topic={post.topicName}
+          kicker={post.sample ? "Fictional sample · needs review" : "Community reading"}
+        />
       </div>
-      <div className="mt-4 grid gap-3">
-        {Object.entries(post.fields).filter(([, value]) => value).map(([key, value]) => (
-          <p key={key} className="leading-7"><span className="font-semibold capitalize">{key}. </span>{value}</p>
+      <div className="mx-auto mt-4 max-w-prose">
+        {readingBoxes(post.type, post.fields).map(([label, value]) => (
+          <p key={label} className="mt-3 leading-7"><span className="text-sm font-semibold text-plum">{label} </span>{value}</p>
         ))}
       </div>
       {post.type === "thesis" ? <p className="mt-3 text-sm">An educational discussion, not a trading signal. Sources below are author-provided and not fact-checked.</p> : null}
@@ -452,6 +460,23 @@ export function ModerationScreen() {
       </ul>
     </div>
   );
+}
+
+const HIDDEN_FIELDS = new Set(["essay", "hook", "asOf"]);
+
+function firstReading(fields: Record<string, string>): string {
+  return Object.entries(fields).find(([key, value]) => value.trim() && !HIDDEN_FIELDS.has(key))?.[1] ?? "";
+}
+
+function readingBoxes(type: string, fields: Record<string, string>): [string, string][] {
+  const prompts = type === "thesis" ? fieldPrompts("thesis") : type === "technique" ? fieldPrompts("technique") : [];
+  const ordered = prompts
+    .map(([key, label]) => [label, fields[key] ?? ""] as [string, string])
+    .filter(([, value]) => value.trim().length > 0);
+  if (ordered.length > 0) return ordered;
+  return Object.entries(fields)
+    .filter(([key, value]) => value.trim() && !HIDDEN_FIELDS.has(key))
+    .map(([key, value]) => [key, value]);
 }
 
 export function LoginScreen() {
