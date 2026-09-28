@@ -1,5 +1,5 @@
 import { latest, prior, type ReportPeriod, type StatementSet } from "@/lib/filings/facts";
-import { describeChange, formatUsd } from "@/lib/filings/format";
+import { formatPeriodEnd, formatUsd } from "@/lib/filings/format";
 import type { StatementSheet } from "@/lib/filings/types";
 
 export function buildSheets(statements: StatementSet, period: ReportPeriod): StatementSheet[] {
@@ -70,12 +70,11 @@ function line(
   const current = latest(points);
   if (!current) return null;
   const previous = prior(points);
-  const change = previous ? describeChange(current.value, previous.value) : null;
   return {
     label,
     formal,
     value: formatUsd(current.value),
-    prior: previous ? `${previousLabel}: ${formatUsd(previous.value)}${change ? `, ${change}` : ""}.` : null,
+    prior: previous ? `${previousLabel}, ended ${formatPeriodEnd(previous.end)}: ${formatUsd(previous.value)}.` : null,
     means,
   };
 }

@@ -2,11 +2,10 @@ import { describe, expect, it } from "vitest";
 import { resolveCompany, rowsFromTickerFile } from "@/lib/filings/companies";
 import { pullFiling } from "@/lib/filings/edgar";
 import { excerptsFromPlain, htmlToPlain } from "@/lib/filings/excerpts";
-import { selectAnnual, statementSetFromFacts } from "@/lib/filings/facts";
+import { emptyStatements, selectAnnual, statementSetFromFacts, type StatementSet } from "@/lib/filings/facts";
+import { buildSheets } from "@/lib/filings/sheets";
 import { narrationFitsFacts } from "@/lib/filings/narrate";
 import { buildFilingReading } from "@/lib/filings/reading";
-import { emptyStatements } from "@/lib/filings/facts";
-import type { StatementSet } from "@/lib/filings/facts";
 
 const SAMPLE_HTML = `
 <html><body>
@@ -69,6 +68,21 @@ describe("filing facts", () => {
       },
     });
     expect(set.revenue[0]?.value).toBe(11_000_000_000);
+  });
+});
+
+describe("statement boxes", () => {
+  it("prints the previous quarter's actual once", () => {
+    const set = emptyStatements();
+    set.cash = [
+      { end: "2026-03-28", value: 540_000_000, filed: null, form: "10-Q" },
+      { end: "2026-06-27", value: 1_004_000_000, filed: null, form: "10-Q" },
+    ];
+    const balance = buildSheets(set, "quarter").find((sheet) => sheet.id === "balance");
+    const line = balance?.lines.find((item) => item.formal === "Cash and cash equivalents");
+    expect(line?.value).toBe("$1 billion");
+    expect(line?.prior).toBe("Previous quarter, ended March 28, 2026: $540 million.");
+    expect(line?.prior).not.toMatch(/percent|from \$/i);
   });
 });
 

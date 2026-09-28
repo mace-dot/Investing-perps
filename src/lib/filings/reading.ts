@@ -130,9 +130,8 @@ function moneySection(points: StatementSet["revenue"], id: string, title: string
     { label, value: formatUsd(current.value), periodEnd: formatPeriodEnd(current.end) },
   ];
   if (previous) {
-    const change = describeChange(current.value, previous.value);
     figures.push({
-      label: change ? `Compared with the prior year, ${change}.` : "Prior year",
+      label: "Actual for the prior period",
       value: formatUsd(previous.value),
       periodEnd: formatPeriodEnd(previous.end),
     });
