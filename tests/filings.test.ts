@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveCompany, rowsFromTickerFile } from "@/lib/filings/companies";
 import { pullFiling } from "@/lib/filings/edgar";
 import { excerptsFromPlain, htmlToPlain } from "@/lib/filings/excerpts";
-import { emptyStatements, selectAnnual, statementSetFromFacts, type StatementSet } from "@/lib/filings/facts";
+import { emptyStatements, selectAnnual, selectQuarter, statementSetFromFacts, type StatementSet } from "@/lib/filings/facts";
 import { buildSheets } from "@/lib/filings/sheets";
 import { narrationFitsFacts } from "@/lib/filings/narrate";
 import { buildFilingReading } from "@/lib/filings/reading";
@@ -68,6 +68,31 @@ describe("filing facts", () => {
       },
     });
     expect(set.revenue[0]?.value).toBe(11_000_000_000);
+  });
+});
+
+describe("quarterly cash flow", () => {
+  it("subtracts the year-to-date column so the box is one quarter", () => {
+    const points = [
+      { start: "2025-09-28", end: "2025-12-27", val: 53_925_000_000, fp: "Q1", form: "10-Q", filed: "2026-01-30" },
+      { start: "2025-09-28", end: "2026-03-28", val: 82_627_000_000, fp: "Q2", form: "10-Q", filed: "2026-05-01" },
+      { start: "2025-09-28", end: "2026-06-27", val: 116_996_000_000, fp: "Q3", form: "10-Q", filed: "2026-07-31" },
+    ];
+    expect(selectQuarter(points, "duration").map((point) => [point.end, point.value])).toEqual([
+      ["2025-12-27", 53_925_000_000],
+      ["2026-03-28", 28_702_000_000],
+      ["2026-06-27", 34_369_000_000],
+    ]);
+  });
+
+  it("keeps the single-quarter column when the filing also prints a year-to-date total", () => {
+    const points = [
+      { start: "2026-03-29", end: "2026-06-27", val: 109_420_000_000, fp: "Q3", form: "10-Q", filed: "2026-07-31" },
+      { start: "2025-09-28", end: "2026-06-27", val: 364_360_000_000, fp: "Q3", form: "10-Q", filed: "2026-07-31" },
+    ];
+    expect(selectQuarter(points, "duration")).toEqual([
+      { end: "2026-06-27", value: 109_420_000_000, filed: "2026-07-31", form: "10-Q" },
+    ]);
   });
 });
 

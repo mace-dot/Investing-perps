@@ -106,11 +106,70 @@ export function selectAnnual(points: FactPoint[], kind: "duration" | "instant"):
 
 export function selectQuarter(points: FactPoint[], kind: "duration" | "instant"): AnnualPoint[] {
   const quarters = new Set(["Q1", "Q2", "Q3"]);
-  return toSeries(points.filter((point) => {
+  const filed = points.filter((point) => {
     if (point.form !== "10-Q" && point.form !== "10-Q/A") return false;
     if (point.fp && !quarters.has(point.fp)) return false;
-    return matchesSpan(point, kind, 75, 110);
-  }));
+    return typeof point.val === "number" && Boolean(point.end);
+  });
+  if (kind === "instant") {
+    return toSeries(filed.filter((point) => matchesSpan(point, "instant", 75, 110)));
+  }
+  return singleQuarters(filed);
+}
+
+function singleQuarters(points: FactPoint[]): AnnualPoint[] {
+  const bySpan = new Map<string, FactPoint>();
+  for (const point of points) {
+    if (!point.start) continue;
+    const key = `${point.end}|${point.start}`;
+    const existing = bySpan.get(key);
+    if (!existing || (point.filed ?? "") >= (existing.filed ?? "")) bySpan.set(key, point);
+  }
+  const rows = [...bySpan.values()];
+  const byEnd = new Map<string, FactPoint[]>();
+  for (const point of rows) {
+    const end = point.end as string;
+    const list = byEnd.get(end) ?? [];
+    list.push(point);
+    byEnd.set(end, list);
+  }
+  const series: AnnualPoint[] = [];
+  for (const end of [...byEnd.keys()].sort()) {
+    const options = byEnd.get(end) ?? [];
+    const quarter = options.find((point) => {
+      const days = daysBetween(point.start as string, point.end as string);
+      return days >= 75 && days <= 110;
+    });
+    if (quarter) {
+      series.push(asPoint(quarter));
+      continue;
+    }
+    const ytd = options.slice().sort((a, b) => daysBetween(b.start as string, b.end as string) - daysBetween(a.start as string, a.end as string))[0];
+    if (!ytd?.start) continue;
+    const earlier = rows
+      .filter((point) => point.start === ytd.start && (point.end as string) < end)
+      .sort((a, b) => (b.end as string).localeCompare(a.end as string));
+    const base = earlier[0];
+    if (!base?.start) continue;
+    const gap = daysBetween(base.end as string, end);
+    if (gap < 75 || gap > 110) continue;
+    series.push({
+      end,
+      value: (ytd.val as number) - (base.val as number),
+      filed: ytd.filed ?? null,
+      form: ytd.form ?? null,
+    });
+  }
+  return series;
+}
+
+function asPoint(point: FactPoint): AnnualPoint {
+  return {
+    end: point.end as string,
+    value: point.val as number,
+    filed: point.filed ?? null,
+    form: point.form ?? null,
+  };
 }
 
 export function selectReported(points: FactPoint[], kind: "duration" | "instant", period: ReportPeriod = "annual"): AnnualPoint[] {
