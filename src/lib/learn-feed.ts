@@ -1,6 +1,15 @@
 import type { TopicId } from "@/lib/curriculum/types";
 import type { InvestingGoal } from "@/lib/filings/types";
 
+export const TOPIC_LABEL: Record<string, string> = {
+  valuation: "The whole price",
+  diversification: "Spreading risk",
+  cash: "Cash",
+  expectations: "What the price expects",
+  dilution: "Your slice",
+  thesis: "A thesis",
+};
+
 export const GOAL_TOPICS: Record<InvestingGoal, TopicId[]> = {
   stability: ["cash", "diversification", "valuation"],
   growth: ["expectations", "thesis", "valuation"],
@@ -41,7 +50,7 @@ export function rankLearnSlides(
       const goalIndex = goalTopics.indexOf(item.topicId as TopicId);
       if (goalIndex >= 0 && context.goal) {
         score += 50 - goalIndex;
-        why = goalWhy(context.goal, item.topicName);
+        why = goalWhy(context.goal);
       }
       if (context.interestTopicIds.includes(item.topicId)) {
         score += 20;
@@ -62,12 +71,12 @@ export function rankLearnSlides(
     }));
 }
 
-function goalWhy(goal: InvestingGoal, topicName: string): string {
+function goalWhy(goal: InvestingGoal): string {
   if (goal === "stability") {
-    return `You want a steadier pattern. ${topicName} is here because a calmer goal starts with cash, bills, and whether one bad day hits everything.`;
+    return "You want a steadier pattern. A calmer goal starts with cash, bills, and whether one bad day hits everything.";
   }
   if (goal === "growth") {
-    return `You are willing to look at bigger swings. ${topicName} is about what a price already expects, not about chasing a move.`;
+    return "You are willing to look at bigger swings. This card is about what a price already expects, not about chasing a move.";
   }
-  return `You want cash paid out to matter. ${topicName} is about what is left after the bills, not about a hotter story.`;
+  return "You want cash paid out to matter. This card is about what is left after the bills.";
 }

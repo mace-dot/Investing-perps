@@ -7,8 +7,7 @@ import { LESSONS } from "@/lib/curriculum/public-lessons";
 import { postReadingMinutes, type DemoPost } from "@/lib/demo-data";
 import { LearnScroll } from "@/components/learn-scroll";
 import { filterFeed, type FeedFilter } from "@/lib/feed";
-import { rankLearnSlides } from "@/lib/learn-feed";
-import { TOPICS } from "@/lib/curriculum/types";
+import { rankLearnSlides, TOPIC_LABEL } from "@/lib/learn-feed";
 import { lessonProgress } from "@/components/app-state";
 import { flagContent } from "@/lib/moderation";
 
@@ -60,7 +59,7 @@ export function FeedScreen() {
         title: lesson.streetTitle,
         hook: lesson.whenUseful,
         topicId: lesson.topicId,
-        topicName: TOPICS.find((topic) => topic.id === lesson.topicId)?.plain ?? lesson.topicId,
+        topicName: TOPIC_LABEL[lesson.topicId] ?? lesson.topicId,
         minutes: lesson.estimatedMinutes,
         href: `/practice/${lesson.id}`,
         done: lessonProgress(app.attempts, lesson.id).done,
@@ -71,7 +70,7 @@ export function FeedScreen() {
         title: post.title,
         hook: (post.fields.hook || post.fields.principle || post.fields.claim || Object.values(post.fields).find((value) => value && value.length < 400) || "").slice(0, 220),
         topicId: post.topicId,
-        topicName: post.topicName,
+        topicName: TOPIC_LABEL[post.topicId] ?? post.topicName,
         minutes: postReadingMinutes(post),
         href: `/posts/${post.id}`,
         done: app.viewed.includes(post.id),
@@ -88,14 +87,9 @@ export function FeedScreen() {
   const noClub = filter === "club" && app.profile?.clubCode !== "CAMPUS-DEMO";
 
   return (
-    <div>
-      <p className="text-sm font-semibold text-plum">One idea at a time</p>
-      <h1 className="mt-1 text-4xl">For you</h1>
-      {filter === "for_you" ? (
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-          Swipe up for the next idea. Your goal and any miss set the order. Your brokerage stays separate.
-        </p>
-      ) : (
+    <div className={filter === "for_you" ? "flex flex-col max-lg:h-[calc(100svh-16.5rem)]" : ""}>
+      <h1 className="text-3xl lg:text-4xl">For you</h1>
+      {filter === "for_you" ? null : (
         <p className="mt-2 max-w-xl text-base leading-7 text-muted">
           Following and your club stay as a list. Popularity is not evidence.
         </p>
@@ -115,7 +109,7 @@ export function FeedScreen() {
         ))}
       </div>
       {filter === "for_you" ? (
-        <div className="mt-4">
+        <div className="mt-3 min-h-0 flex-1">
           <LearnScroll
             slides={learnSlides}
             goal={app.investingGoal}
