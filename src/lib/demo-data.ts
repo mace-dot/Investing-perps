@@ -237,8 +237,11 @@ export const SAMPLE_COMMENTS: DemoComment[] = [
 ];
 
 export function postReadingMinutes(post: DemoPost): number {
-  const text = Object.values(post.fields).join(" ");
-  return readingMinutes(text);
+  const text = Object.entries(post.fields)
+    .filter(([key]) => key !== "essay" && key !== "hook")
+    .map(([, value]) => value)
+    .join(" ");
+  return readingMinutes(text || post.fields.essay || "");
 }
 
 export const SAMPLE_RANKING = [

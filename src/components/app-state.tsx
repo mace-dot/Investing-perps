@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { SAMPLE_CLUB, SAMPLE_COMMENTS, SAMPLE_POSTS, type DemoComment, type DemoPost, type PostType, type SourceDraft } from "@/lib/demo-data";
+import type { InvestingGoal } from "@/lib/filings/types";
 import { LESSONS } from "@/lib/curriculum/public-lessons";
 import { TOPICS } from "@/lib/curriculum/types";
 
@@ -65,6 +66,7 @@ type State = {
   hiddenIds: string[];
   reviewedTags: string[];
   notice: string | null;
+  investingGoal: InvestingGoal | null;
 };
 
 const STORAGE_KEY = "investing-reps-demo-v1";
@@ -84,6 +86,7 @@ const empty: State = {
   hiddenIds: [],
   reviewedTags: [],
   notice: null,
+  investingGoal: null,
 };
 
 const DEMO_NOTE = "Saved on this device only. Demo mode does not write to Supabase or to the Favos database.";
@@ -107,6 +110,7 @@ type AppContextValue = State & {
   deletePost: (id: string) => void;
   addComment: (comment: Omit<DemoComment, "id" | "createdAt" | "sample">) => void;
   markTagReviewed: (tag: string) => void;
+  setInvestingGoal: (goal: InvestingGoal) => void;
   resetDemo: () => void;
 };
 
@@ -123,6 +127,10 @@ function loadState(): State {
       posts: [...SAMPLE_POSTS.filter((post) => !(parsed.hiddenIds ?? []).includes(post.id)), ...(parsed.posts ?? []).filter((post) => !post.sample)],
       comments: [...SAMPLE_COMMENTS, ...(parsed.comments ?? []).filter((comment) => !comment.sample)],
       notice: null,
+      investingGoal:
+        parsed.investingGoal === "stability" || parsed.investingGoal === "growth" || parsed.investingGoal === "income"
+          ? parsed.investingGoal
+          : null,
     };
   } catch {
     return empty;
@@ -260,6 +268,7 @@ export function AppState({
           ...current,
           reviewedTags: current.reviewedTags.includes(tag) ? current.reviewedTags : [...current.reviewedTags, tag],
         })),
+      setInvestingGoal: (goal) => update((current) => ({ ...current, investingGoal: goal })),
       resetDemo: () => {
         localStorage.removeItem(STORAGE_KEY);
         setState(empty);

@@ -5,7 +5,10 @@ import { useMemo, useState } from "react";
 import { useApp } from "@/components/app-state";
 import { LESSONS } from "@/lib/curriculum/public-lessons";
 import { postReadingMinutes, type DemoPost } from "@/lib/demo-data";
+import { LearnScroll } from "@/components/learn-scroll";
 import { filterFeed, type FeedFilter } from "@/lib/feed";
+import { rankLearnSlides, TOPIC_LABEL } from "@/lib/learn-feed";
+import { lessonProgress } from "@/components/app-state";
 import { flagContent } from "@/lib/moderation";
 
 const FILTERS: { id: FeedFilter; label: string }[] = [
@@ -48,17 +51,49 @@ export function FeedScreen() {
     clubId: app.profile?.clubCode === "CAMPUS-DEMO" ? "north-quad" : null,
   });
   const items = result.items;
+  const learnSlides = rankLearnSlides(
+    [
+      ...LESSONS.map((lesson) => ({
+        id: lesson.id,
+        kind: "lesson" as const,
+        title: lesson.streetTitle,
+        hook: lesson.whenUseful,
+        topicId: lesson.topicId,
+        topicName: TOPIC_LABEL[lesson.topicId] ?? lesson.topicId,
+        minutes: lesson.estimatedMinutes,
+        href: `/practice/${lesson.id}`,
+        done: lessonProgress(app.attempts, lesson.id).done,
+      })),
+      ...visiblePosts.map((post) => ({
+        id: post.id,
+        kind: "note" as const,
+        title: post.title,
+        hook: (post.fields.hook || post.fields.principle || post.fields.claim || Object.values(post.fields).find((value) => value && value.length < 400) || "").slice(0, 220),
+        topicId: post.topicId,
+        topicName: TOPIC_LABEL[post.topicId] ?? post.topicName,
+        minutes: postReadingMinutes(post),
+        href: `/posts/${post.id}`,
+        done: app.viewed.includes(post.id),
+      })),
+    ],
+    {
+      goal: app.investingGoal,
+      interestTopicIds: app.profile?.interests ?? [],
+      mistakeTopicIds: mistakeTopics,
+    },
+  );
 
   const noFollows = filter === "following" && app.follows.length === 0;
   const noClub = filter === "club" && app.profile?.clubCode !== "CAMPUS-DEMO";
 
   return (
-    <div>
-      <p className="text-sm font-semibold text-plum">Sample curriculum, needs review</p>
-      <h1 className="mt-1 text-4xl">Feed</h1>
-      <p className="mt-2 max-w-xl text-base leading-7 text-muted">
-        For You uses your topics, recent misses, people you follow, and posts you have not opened. It is not an AI ranking, and popularity is not evidence.
-      </p>
+    <div className={filter === "for_you" ? "flex flex-col max-lg:h-[calc(100svh-16.5rem)]" : ""}>
+      <h1 className="text-3xl lg:text-4xl">For you</h1>
+      {filter === "for_you" ? null : (
+        <p className="mt-2 max-w-xl text-base leading-7 text-muted">
+          Following and your club stay as a list. Popularity is not evidence.
+        </p>
+      )}
       <div className="mt-4 flex gap-2 overflow-x-auto" role="tablist" aria-label="Feed filters">
         {FILTERS.map((item) => (
           <button
@@ -73,7 +108,16 @@ export function FeedScreen() {
           </button>
         ))}
       </div>
-      <div className="mt-4 grid gap-4">
+      {filter === "for_you" ? (
+        <div className="mt-3 min-h-0 flex-1">
+          <LearnScroll
+            slides={learnSlides}
+            goal={app.investingGoal}
+            onGoal={app.setInvestingGoal}
+          />
+        </div>
+      ) : null}
+      <div className={`mt-4 grid gap-4 ${filter === "for_you" ? "hidden" : ""}`}>
         {noFollows ? (
           <EmptyState title="You are not following anyone yet." body="Following is saved on this device in demo mode. Open a sample post and follow its author if you want this tab to fill." />
         ) : null}
