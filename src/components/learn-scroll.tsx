@@ -29,10 +29,14 @@ export function LearnScroll({
           </button>
         ))}
       </div>
-      <div className="learn-scroll mt-3 min-h-0 flex-1" tabIndex={0} aria-label="Learning scroll">
+      <p className="mt-2 text-sm leading-6 text-muted">
+        Swipe sideways. Each card is one problem.{" "}
+        <Link href="/strategy" className="font-semibold text-teal">Set the order from your month.</Link>
+      </p>
+      <div className="learn-scroll mt-3 min-h-0 min-w-0 flex-1" tabIndex={0} aria-label="Learning scroll">
         {slides.map((slide, index) => (
           <article key={slide.id} className="learn-slide flex flex-col rounded-3xl border border-line bg-card p-5">
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="min-h-0 flex-1 overflow-y-auto" style={{ touchAction: "pan-y" }}>
               <p className="text-sm font-semibold text-plum">
                 {index + 1} of {slides.length + 1} · {slide.topicName} · {slide.minutes} min
               </p>
@@ -44,7 +48,7 @@ export function LearnScroll({
           </article>
         ))}
         <article className="learn-slide flex flex-col rounded-3xl border border-line bg-ink p-5 text-white">
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto" style={{ touchAction: "pan-y" }}>
             <p className="text-sm font-semibold text-white/80">Not connected</p>
             <h2 className="mt-3 text-3xl leading-tight text-white">Your brokerage stays where it is</h2>
             <p className="mt-3 text-base leading-7 text-white/90">

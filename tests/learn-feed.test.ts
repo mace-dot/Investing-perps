@@ -40,6 +40,27 @@ describe("learning scroll order", () => {
     expect(slides[0]?.why).toContain("did not match");
   });
 
+  it("lets a money picture outrank the goal, while a miss still comes first", () => {
+    const guided = rankLearnSlides(cards, {
+      goal: "stability",
+      interestTopicIds: [],
+      mistakeTopicIds: [],
+      strategyTopicIds: ["thesis", "valuation"],
+    });
+    expect(guided[0]?.id).toBe("thesis");
+    expect(guided[0]?.why.toLowerCase()).toContain("money picture");
+    expect(guided[0]?.why).not.toMatch(/\b(buy|sell|hold)\b/i);
+
+    const missed = rankLearnSlides(cards, {
+      goal: "stability",
+      interestTopicIds: [],
+      mistakeTopicIds: ["cash"],
+      strategyTopicIds: ["thesis"],
+    });
+    expect(missed[0]?.id).toBe("cash");
+    expect(missed[0]?.why).toContain("did not match");
+  });
+
   it("sinks a finished lesson below one that is still open", () => {
     const slides = rankLearnSlides(
       cards.map((card) => (card.id === "cash" ? { ...card, done: true } : card)),

@@ -39,13 +39,15 @@ export function rankLearnSlides(
     goal: InvestingGoal | null;
     interestTopicIds: string[];
     mistakeTopicIds: string[];
+    strategyTopicIds?: string[];
   },
 ): LearnSlide[] {
   const goalTopics = context.goal ? GOAL_TOPICS[context.goal] : [];
+  const strategyTopics = context.strategyTopicIds ?? [];
   return items
     .map((item) => {
       let score = item.kind === "lesson" ? 8 : 3;
-      let why = "Next short idea. Scroll when you want the one after it.";
+      let why = "Next problem. Swipe sideways for the one after it.";
       if (item.done) score -= 80;
       const goalIndex = goalTopics.indexOf(item.topicId as TopicId);
       if (goalIndex >= 0 && context.goal) {
@@ -55,6 +57,11 @@ export function rankLearnSlides(
       if (context.interestTopicIds.includes(item.topicId)) {
         score += 20;
         if (!context.goal) why = `You marked ${item.topicName} as something you want to practice.`;
+      }
+      const strategyIndex = strategyTopics.indexOf(item.topicId);
+      if (strategyIndex >= 0) {
+        score += 60 - strategyIndex;
+        why = "Your money picture put this problem next. Swipe sideways for the one after it.";
       }
       if (context.mistakeTopicIds.includes(item.topicId)) {
         score += 70;

@@ -10,8 +10,8 @@ const NAV = [
   { href: "/", label: "Feed" },
   { href: "/practice", label: "Practice" },
   { href: "/filings", label: "Filings" },
+  { href: "/strategy", label: "Strategy" },
   { href: "/create", label: "Create" },
-  { href: "/rankings", label: "Rankings" },
   { href: "/profile", label: "Profile" },
 ];
 
@@ -44,6 +44,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="mt-6 grid gap-2 px-3 text-sm">
+          <Link href="/rankings" className="min-h-11 py-2">Rankings</Link>
           <Link href="/frameworks" className="min-h-11 py-2">Ideas in plain words</Link>
           <Link href="/rules" className="min-h-11 py-2">Community rules</Link>
           <Link href="/login" className="min-h-11 py-2">Sign in</Link>
@@ -66,6 +67,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         ) : null}
         <main id="main" className="min-w-0 px-4 pb-28 pt-4 lg:pb-10">
           <div className="mb-4 flex flex-wrap gap-3 text-sm lg:hidden">
+            <Link href="/rankings" className="min-h-11 py-2 font-semibold text-teal">Rankings</Link>
             <Link href="/frameworks" className="min-h-11 py-2 font-semibold text-teal">Ideas</Link>
             <Link href="/rules" className="min-h-11 py-2 font-semibold text-teal">Rules</Link>
             <Link href="/login" className="min-h-11 py-2 font-semibold text-teal">Sign in</Link>

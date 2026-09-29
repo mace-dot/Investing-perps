@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useApp } from "@/components/app-state";
 import { formatPeriodEnd } from "@/lib/filings/format";
-import { GOAL_LABELS, type CompanyMatch, type FilingReading, type InvestingGoal, type ReportSpan, type StatementSheet } from "@/lib/filings/types";
+import { GOAL_LABELS, type CompanyMatch, type FilingReading, type InvestingGoal, type ReportSpan, type StatementLine, type StatementSheet } from "@/lib/filings/types";
 
 const GOALS: InvestingGoal[] = ["stability", "growth", "income"];
 
@@ -61,10 +61,10 @@ export function FilingReader() {
 
   return (
     <div className="grid gap-4">
-      <p className="text-sm font-semibold text-plum">SEC filings · not a recommendation</p>
+      <p className="text-sm font-semibold text-plum">A company report, in plain words</p>
       <h1 className="text-4xl">Read a filing</h1>
       <p className="max-w-xl leading-7">
-        Enter a ticker or company name. The app pulls the income statement, the balance sheet, and the cash flow statement from the SEC, for the latest year or the latest quarter. You can also upload a report if you already have the file. The upload is not saved.
+        Type a ticker. You get three numbers first: sales, profit, and cash from the business. The rest of the report stays folded until you open it.
       </p>
       <fieldset>
         <legend className="text-sm font-semibold">Which report?</legend>
@@ -72,29 +72,22 @@ export function FilingReader() {
           <button type="button" className={period === "annual" ? "btn-primary" : "btn-quiet"} onClick={() => setPeriod("annual")}>Latest year</button>
           <button type="button" className={period === "quarter" ? "btn-primary" : "btn-quiet"} onClick={() => setPeriod("quarter")}>Latest quarter</button>
         </div>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          {period === "annual"
-            ? "The latest year is the 10-K. It is the full-year story."
-            : "The latest quarter is the 10-Q. It is a shorter update, not the whole year."}
-        </p>
       </fieldset>
       <fieldset>
-        <legend className="text-sm font-semibold">What pattern are you comparing this with?</legend>
-        <div className="mt-2 grid gap-2">
+        <legend className="text-sm font-semibold">Compare it with</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
           {GOALS.map((id) => (
-            <label key={id} className="flex min-h-11 items-start gap-2 rounded-2xl border border-line bg-card px-3 py-3">
-              <input
-                type="radio"
-                name="goal"
-                className="mt-1"
-                checked={selected === id}
-                onChange={() => {
-                  setGoal(id);
-                  app.setInvestingGoal(id);
-                }}
-              />
-              <span>{GOAL_LABELS[id]}</span>
-            </label>
+            <button
+              key={id}
+              type="button"
+              className={selected === id ? "btn-primary" : "btn-quiet"}
+              onClick={() => {
+                setGoal(id);
+                app.setInvestingGoal(id);
+              }}
+            >
+              {GOAL_LABELS[id]}
+            </button>
           ))}
         </div>
       </fieldset>
@@ -115,21 +108,24 @@ export function FilingReader() {
             className="mt-2 w-full min-h-11 rounded-2xl border border-line bg-card px-3"
           />
         </label>
-        <label className="text-sm font-semibold">
-          Or upload a report
-          <input
-            type="file"
-            accept=".htm,.html,.txt,.pdf,text/html,text/plain,application/pdf"
-            className="mt-2 block w-full text-sm"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          />
-        </label>
+        <details className="rounded-2xl border border-line bg-card px-3 py-2">
+          <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">Already have the file?</summary>
+          <label className="mt-2 block text-sm font-semibold">
+            Upload a report. It is not saved.
+            <input
+              type="file"
+              accept=".htm,.html,.txt,.pdf,text/html,text/plain,application/pdf"
+              className="mt-2 block w-full text-sm font-normal"
+              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            />
+          </label>
+        </details>
         <button type="submit" className="btn-primary w-fit" disabled={pending || !selected}>
           {pending ? "Reading the filing" : "Read the filing"}
         </button>
       </form>
       <p className="text-sm leading-6 text-muted">
-        This is a reading of a filing against a goal you chose. It does not tell you what to do with your money. A famous company is not evidence that the pattern fits you.
+        This is a reading of a filing against a goal you chose. It does not tell you what to do with your money.
       </p>
       {pending ? (
         <p role="status">
@@ -161,7 +157,10 @@ export function FilingReader() {
   );
 }
 
+const STARTER_LABELS = ["Sales", "Profit or loss", "Cash from running the business"];
+
 function ReadingView({ reading }: { reading: FilingReading }) {
+  const starters = STARTER_LABELS.map((label) => reading.sheets.flatMap((sheet) => sheet.lines).find((line) => line.label === label) ?? null);
   return (
     <article className="grid gap-4">
       <header>
@@ -174,45 +173,60 @@ function ReadingView({ reading }: { reading: FilingReading }) {
         </p>
       </header>
       <p className="rounded-3xl border border-line bg-card p-4 leading-7">{reading.notAdvice}</p>
-      <p className="text-lg leading-8">{reading.overview}</p>
-      <div className="grid gap-3">
-        {reading.sheets.map((sheet) => (
-          <StatementCard key={sheet.id} sheet={sheet} />
-        ))}
-      </div>
-      <p className="text-sm leading-6 text-muted">{reading.proseNote}</p>
       <section className="rounded-3xl border border-line bg-card p-4">
         <h3 className="text-2xl">{reading.alignment.headline}</h3>
         <p className="mt-2 leading-7">{reading.alignment.detail}</p>
       </section>
-      <div className="grid gap-3">
-        {reading.sections.map((section) => (
-          <section key={section.id} className="rounded-3xl border border-line bg-card p-4">
-            <h3 className="text-2xl">{section.title}</h3>
-            <ul className="mt-2 grid gap-1">
-              {section.figures.map((figure) => (
-                <li key={`${section.id}-${figure.label}-${figure.periodEnd}`}>
-                  <span className="font-semibold">{figure.value}.</span> {figure.label} {reading.periodKind === "quarter" ? "Quarter ended" : "Year ended"} {figure.periodEnd}.
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 leading-7">{section.indicates}</p>
-            <p className="mt-2 text-sm leading-6 text-muted">Where this can mislead: {section.mislead}</p>
-          </section>
-        ))}
-      </div>
       <section>
-        <h3 className="text-2xl">What the notes and discussion say</h3>
-        <p className="mt-2 leading-7">{reading.excerptReading}</p>
+        <h3 className="text-2xl">Start here</h3>
+        <p className="mt-1 text-sm leading-6 text-muted">Three numbers. Each one is the figure from the report, then the earlier period's own number.</p>
+        <div className="mt-3 grid gap-3">
+          {STARTER_LABELS.map((label, index) => (
+            <StarterCard key={label} label={label} line={starters[index] ?? null} />
+          ))}
+        </div>
+      </section>
+      <details className="rounded-3xl border border-line bg-card p-4">
+        <summary className="min-h-11 cursor-pointer text-lg font-semibold">All three statements</summary>
+        <p className="mt-3 text-sm leading-6 text-muted">{reading.proseNote}</p>
+        <p className="mt-3 leading-7">{reading.overview}</p>
+        <div className="mt-3 grid gap-3">
+          {reading.sheets.map((sheet) => (
+            <StatementCard key={sheet.id} sheet={sheet} />
+          ))}
+        </div>
+      </details>
+      <details className="rounded-3xl border border-line bg-card p-4">
+        <summary className="min-h-11 cursor-pointer text-lg font-semibold">What the numbers can mean</summary>
+        <div className="mt-3 grid gap-3">
+          {reading.sections.map((section) => (
+            <section key={section.id}>
+              <h3 className="text-2xl">{section.title}</h3>
+              <ul className="mt-2 grid gap-1">
+                {section.figures.map((figure) => (
+                  <li key={`${section.id}-${figure.label}-${figure.periodEnd}`}>
+                    <span className="font-semibold">{figure.value}.</span> {figure.label} {reading.periodKind === "quarter" ? "Quarter ended" : "Year ended"} {figure.periodEnd}.
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 leading-7">{section.indicates}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">Where this can mislead: {section.mislead}</p>
+            </section>
+          ))}
+        </div>
+      </details>
+      <details className="rounded-3xl border border-line bg-card p-4">
+        <summary className="min-h-11 cursor-pointer text-lg font-semibold">What the notes say</summary>
+        <p className="mt-3 leading-7">{reading.excerptReading}</p>
         <div className="mt-3 grid gap-3">
           {reading.excerpts.map((excerpt) => (
-            <blockquote key={excerpt.heading} className="rounded-3xl border border-line bg-card p-4">
+            <blockquote key={excerpt.heading}>
               <p className="text-sm font-semibold text-plum">{excerpt.heading}</p>
               <p className="mt-2 leading-7">{excerpt.text}</p>
             </blockquote>
           ))}
         </div>
-      </section>
+      </details>
       {reading.filingUrl ? (
         <p className="break-all text-sm leading-6">
           <a className="font-semibold text-teal" href={reading.filingUrl} target="_blank" rel="noreferrer">
@@ -223,6 +237,25 @@ function ReadingView({ reading }: { reading: FilingReading }) {
         <p className="text-sm leading-6 text-muted">No SEC link is attached. This reading used the uploaded file only, so standardized totals were not added.</p>
       )}
     </article>
+  );
+}
+
+function StarterCard({ label, line }: { label: string; line: StatementLine | null }) {
+  if (!line) {
+    return (
+      <section className="rounded-3xl border border-line bg-card p-4">
+        <p className="font-semibold">{label}</p>
+        <p className="mt-1 text-sm leading-6 text-muted">That line was not in this extract.</p>
+      </section>
+    );
+  }
+  return (
+    <section className="rounded-3xl border border-line bg-card p-4">
+      <p className="font-serif text-3xl">{line.value}</p>
+      <p className="mt-1 font-semibold">{label}</p>
+      <p className="mt-1 leading-7">{line.means}</p>
+      {line.prior ? <p className="mt-1 text-sm leading-6 text-muted">{line.prior}</p> : null}
+    </section>
   );
 }
 
