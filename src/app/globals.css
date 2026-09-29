@@ -26,6 +26,10 @@ body {
   font-family: var(--font-sans);
 }
 
+details:not([open]) > :not(summary) {
+  display: none !important;
+}
+
 h1,
 h2,
 h3 {
