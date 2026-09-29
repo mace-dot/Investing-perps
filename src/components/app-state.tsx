@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { SAMPLE_CLUB, SAMPLE_COMMENTS, SAMPLE_POSTS, type DemoComment, type DemoPost, type PostType, type SourceDraft } from "@/lib/demo-data";
 import type { InvestingGoal } from "@/lib/filings/types";
+import { emptyMoneyPicture, type CreditBand, type EmploymentStatus, type MoneyPicture } from "@/lib/strategy";
 import { LESSONS } from "@/lib/curriculum/public-lessons";
 import { TOPICS } from "@/lib/curriculum/types";
 
@@ -67,6 +68,7 @@ type State = {
   reviewedTags: string[];
   notice: string | null;
   investingGoal: InvestingGoal | null;
+  moneyPicture: MoneyPicture;
 };
 
 const STORAGE_KEY = "investing-reps-demo-v1";
@@ -87,6 +89,7 @@ const empty: State = {
   reviewedTags: [],
   notice: null,
   investingGoal: null,
+  moneyPicture: emptyMoneyPicture(),
 };
 
 const DEMO_NOTE = "Saved on this device only. Demo mode does not write to Supabase or to the Favos database.";
@@ -111,6 +114,7 @@ type AppContextValue = State & {
   addComment: (comment: Omit<DemoComment, "id" | "createdAt" | "sample">) => void;
   markTagReviewed: (tag: string) => void;
   setInvestingGoal: (goal: InvestingGoal) => void;
+  setMoneyPicture: (picture: MoneyPicture) => void;
   resetDemo: () => void;
 };
 
@@ -131,6 +135,7 @@ function loadState(): State {
         parsed.investingGoal === "stability" || parsed.investingGoal === "growth" || parsed.investingGoal === "income"
           ? parsed.investingGoal
           : null,
+      moneyPicture: coerceMoneyPicture(parsed.moneyPicture),
     };
   } catch {
     return empty;
@@ -269,6 +274,7 @@ export function AppState({
           reviewedTags: current.reviewedTags.includes(tag) ? current.reviewedTags : [...current.reviewedTags, tag],
         })),
       setInvestingGoal: (goal) => update((current) => ({ ...current, investingGoal: goal })),
+      setMoneyPicture: (picture) => update((current) => ({ ...current, moneyPicture: picture })),
       resetDemo: () => {
         localStorage.removeItem(STORAGE_KEY);
         setState(empty);
@@ -277,6 +283,32 @@ export function AppState({
   }, [mode, modeReason, ready, state]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}
+
+function coerceMoneyPicture(value: unknown): MoneyPicture {
+  const employment = value && typeof value === "object" && "employment" in value ? (value as { employment?: unknown }).employment : null;
+  const creditBand = value && typeof value === "object" && "creditBand" in value ? (value as { creditBand?: unknown }).creditBand : null;
+  const source = value && typeof value === "object" ? value as Partial<MoneyPicture> : {};
+  return {
+    employment: isEmployment(employment) ? employment : null,
+    incomeMonthly: moneyOrNull(source.incomeMonthly),
+    billsMonthly: moneyOrNull(source.billsMonthly),
+    cashSaved: moneyOrNull(source.cashSaved),
+    creditBand: isCreditBand(creditBand) ? creditBand : null,
+  };
+}
+
+function isEmployment(value: unknown): value is EmploymentStatus {
+  return value === "student" || value === "part_time" || value === "full_time" || value === "between_jobs";
+}
+
+function isCreditBand(value: unknown): value is CreditBand {
+  return value === "building" || value === "fair" || value === "good" || value === "strong" || value === "skip";
+}
+
+function moneyOrNull(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 10_000_000) return null;
+  return Math.round(value);
 }
 
 export function useApp() {

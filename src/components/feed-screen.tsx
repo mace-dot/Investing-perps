@@ -8,6 +8,7 @@ import { postReadingMinutes, type DemoPost } from "@/lib/demo-data";
 import { LearnScroll } from "@/components/learn-scroll";
 import { filterFeed, type FeedFilter } from "@/lib/feed";
 import { rankLearnSlides, TOPIC_LABEL } from "@/lib/learn-feed";
+import { buildStrategy, type MoneyPicture } from "@/lib/strategy";
 import { lessonProgress } from "@/components/app-state";
 import { flagContent } from "@/lib/moderation";
 
@@ -80,6 +81,9 @@ export function FeedScreen() {
       goal: app.investingGoal,
       interestTopicIds: app.profile?.interests ?? [],
       mistakeTopicIds: mistakeTopics,
+      strategyTopicIds: pictureGuidesFeed(app.moneyPicture)
+        ? buildStrategy(app.moneyPicture, app.investingGoal).topicIds
+        : [],
     },
   );
 
@@ -87,8 +91,8 @@ export function FeedScreen() {
   const noClub = filter === "club" && app.profile?.clubCode !== "CAMPUS-DEMO";
 
   return (
-    <div className={filter === "for_you" ? "flex flex-col max-lg:h-[calc(100svh-16.5rem)]" : ""}>
-      <h1 className="text-3xl lg:text-4xl">For you</h1>
+    <div className={filter === "for_you" ? "flex min-w-0 flex-col max-lg:h-[calc(100svh-16.5rem)]" : ""}>
+      <h1 className="text-3xl lg:text-4xl">{filter === "for_you" ? "Problems" : "For you"}</h1>
       {filter === "for_you" ? null : (
         <p className="mt-2 max-w-xl text-base leading-7 text-muted">
           Following and your club stay as a list. Popularity is not evidence.
@@ -231,6 +235,14 @@ function PostCard({
 
 function Badge({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full bg-paper px-2 py-1 text-xs font-semibold text-ink">{children}</span>;
+}
+
+function pictureGuidesFeed(picture: MoneyPicture) {
+  return picture.employment !== null
+    || picture.incomeMonthly !== null
+    || picture.billsMonthly !== null
+    || picture.cashSaved !== null
+    || (picture.creditBand !== null && picture.creditBand !== "skip");
 }
 
 function CaughtUp() {

@@ -11,6 +11,7 @@ import { FRAMEWORKS, IDEA_TENSIONS } from "@/lib/curriculum/frameworks";
 import { LESSONS } from "@/lib/curriculum/public-lessons";
 import { TOPICS } from "@/lib/curriculum/types";
 import { GOAL_LABELS } from "@/lib/filings/types";
+import { buildStrategy } from "@/lib/strategy";
 import { accuracyLabel } from "@/lib/scoring";
 
 export function RankingsScreen() {
@@ -78,9 +79,11 @@ export function ProfileScreen() {
       <p className="mt-1 text-sm">{app.profile?.clubCode === "CAMPUS-DEMO" ? "Sample club: North Quad Investment Club" : "No club"}</p>
       <p className="mt-1 text-sm">Global ranking: {app.profile?.showOnGlobalRanking ? "Opted in" : "Excluded by default"}</p>
       <p className="mt-1 text-sm">Goal: {app.investingGoal ? GOAL_LABELS[app.investingGoal] : "Not chosen yet. The feed uses it to order the scroll."}</p>
+      <p className="mt-1 text-sm">Money picture: {buildStrategy(app.moneyPicture, app.investingGoal).picture}</p>
       <p className="mt-3 max-w-xl text-sm leading-6 text-muted">A brokerage is not connected. Linking one is not available. This app does not place trades or tell you what to buy or sell.</p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link href="/onboarding" className="btn-primary">Edit profile</Link>
+        <Link href="/strategy" className="btn-primary">Your strategy</Link>
+        <Link href="/onboarding" className="btn-quiet">Edit profile</Link>
         <Link href="/settings" className="btn-quiet">Export or delete</Link>
       </div>
       <section className="mt-6">
